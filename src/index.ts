@@ -1,19 +1,7 @@
-// import { User } from './models/User';
+import { User } from './models/User';
 
-// const user = new User({ name: 'carlos', age: 26 });
+const user = new User({ id: 3 });
 
-// user.on('click', (): void => {
-//   console.log(123);
-// });
-// user.on('click', (): void => {
-//   console.log(456);
-// });
-// user.on('click', (): void => {
-//   console.log(789);
-// });
+user.set({ name: 'Pedro', age: 18 });
 
-// user.on('hover', (): void => {});
-
-// user.trigger('click');
-
-// // console.log(user);
+user.save();
