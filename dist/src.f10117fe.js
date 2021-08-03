@@ -118,7 +118,20 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"src/index.ts":[function(require,module,exports) {
-
+// import { User } from './models/User';
+// const user = new User({ name: 'carlos', age: 26 });
+// user.on('click', (): void => {
+//   console.log(123);
+// });
+// user.on('click', (): void => {
+//   console.log(456);
+// });
+// user.on('click', (): void => {
+//   console.log(789);
+// });
+// user.on('hover', (): void => {});
+// user.trigger('click');
+// // console.log(user);
 },{}],"../../../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
