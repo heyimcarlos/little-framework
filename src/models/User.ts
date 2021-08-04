@@ -1,61 +1,62 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
+import { Attributes } from './Attributes';
+import { Callback, Eventing } from './Eventing';
+import { Sync } from './Sync';
 
 // User class that handles all their data.
 // age, name, update name, randomize age.
 
-interface UserProps {
+export interface UserProps {
   name?: string;
   age?: number;
   id?: number;
 }
 
-enum Events {
-  click = 'click',
-}
-
-type Callback = () => void;
-
+const serverURL = 'http://localhost:3000/users';
 export class User {
-  public events: { [key: string]: Callback[] } = {};
-  constructor(private data: UserProps) {}
+  public events: Eventing = new Eventing();
+  public sync: Sync<UserProps> = new Sync<UserProps>(serverURL);
+  public attributes: Attributes<UserProps>;
 
-  get(propName: string): string | number {
-    return this.data[propName];
+  constructor(attrs: UserProps) {
+    this.attributes = new Attributes<UserProps>(attrs);
   }
 
-  set(updateObj: UserProps): void {
-    Object.assign(this.data, updateObj);
+  public get get() {
+    return this.attributes.get;
   }
 
-  on(eventName: string, cb: Callback): void {
-    const handlers = this.events[eventName] || [];
-    handlers.push(cb);
-
-    this.events[eventName] = handlers;
+  public get on() {
+    return this.events.on;
   }
 
-  trigger(eventName: string): void {
-    const handlers: Callback[] | undefined = this.events[eventName];
-
-    if (!handlers || handlers.length === 0) return;
-
-    handlers.forEach((cb: Callback) => cb());
+  public get trigger() {
+    return this.events.trigger;
   }
 
-  fetch(): void {
-    axios.get(`http://localhost:3000/users/${this.get('id')}`).then((res: AxiosResponse): void => {
-      this.set(res.data);
+  public set(updateObj: UserProps): void {
+    this.attributes.set(updateObj);
+    this.events.trigger('change');
+  }
+
+  public fetch(): void {
+    const id = this.get('id');
+
+    if (typeof id !== 'number') throw new Error('No Id');
+
+    this.sync.fetch(id).then((response: AxiosResponse): void => {
+      this.set(response.data);
     });
   }
 
-  save(): void {
-    // if id exists we do a put request.
-    const id = this.get('id');
-
-    if (!id) {
-      axios.post('http://localhost:3000/users', this.data).then(res => console.log(res.data));
-    } else {
-      axios.put(`http://localhost:3000/users/${id}`, this.data).then(res => console.log(res.data));
-    }
+  public save(): void {
+    this.sync
+      .save(this.attributes.getAll())
+      .then((response: AxiosResponse): void => {
+        this.trigger('save');
+      })
+      .catch(() => {
+        this.trigger('error');
+      });
   }
 }
