@@ -1,7 +1,8 @@
-import { AxiosResponse } from 'axios';
+import { Model } from './Model';
+import { ApiSync } from './ApiSync';
 import { Attributes } from './Attributes';
-import { Callback, Eventing } from './Eventing';
-import { Sync } from './Sync';
+import { Eventing } from './Eventing';
+import { Collection } from './Collection';
 
 // User class that handles all their data.
 // age, name, update name, randomize age.
@@ -13,50 +14,22 @@ export interface UserProps {
 }
 
 const serverURL = 'http://localhost:3000/users';
-export class User {
-  public events: Eventing = new Eventing();
-  public sync: Sync<UserProps> = new Sync<UserProps>(serverURL);
-  public attributes: Attributes<UserProps>;
-
-  constructor(attrs: UserProps) {
-    this.attributes = new Attributes<UserProps>(attrs);
+export class User extends Model<UserProps> {
+  static buildUser(attrs: UserProps): User {
+    return new User(
+      new Attributes<UserProps>(attrs),
+      new Eventing(),
+      new ApiSync<UserProps>(serverURL)
+    );
   }
 
-  public get get() {
-    return this.attributes.get;
+  static userCollection(): Collection<User, UserProps> {
+    User;
+    return new Collection(serverURL, (user: UserProps) => User.buildUser(user));
   }
 
-  public get on() {
-    return this.events.on;
-  }
-
-  public get trigger() {
-    return this.events.trigger;
-  }
-
-  public set(updateObj: UserProps): void {
-    this.attributes.set(updateObj);
-    this.events.trigger('change');
-  }
-
-  public fetch(): void {
-    const id = this.get('id');
-
-    if (typeof id !== 'number') throw new Error('No Id');
-
-    this.sync.fetch(id).then((response: AxiosResponse): void => {
-      this.set(response.data);
-    });
-  }
-
-  public save(): void {
-    this.sync
-      .save(this.attributes.getAll())
-      .then((response: AxiosResponse): void => {
-        this.trigger('save');
-      })
-      .catch(() => {
-        this.trigger('error');
-      });
+  isAdmin(): boolean {
+    if (this.get('id') === 1) return true;
+    else return false;
   }
 }
